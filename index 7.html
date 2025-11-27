@@ -1,0 +1,1549 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VitaNuova - Simulatore PAC Professionale</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --color-primary: #003a70;
+            --color-primary-hover: #002a52;
+            --color-accent: #c0152f;
+            --color-secondary: #f5f5f5;
+            --color-text: #1f2121;
+            --color-text-light: #626c7c;
+            --color-border: #e0e0e0;
+            --color-success: #2fb584;
+            --color-warning: #e67e22;
+            --color-dark-bg: #1a1a2e;
+            --color-dark-surface: #16213e;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #e7edf7 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--color-text);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, var(--color-dark-bg) 0%, var(--color-dark-surface) 100%);
+            color: #e0e0e0;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--color-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: var(--color-dark-surface);
+            color: #ffd700;
+        }
+
+        .theme-toggle:hover { transform: scale(1.1); }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        body.dark-mode header {
+            background: var(--color-dark-surface);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .logo-title {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .logo-placeholder {
+            width: 120px;
+            height: 70px;
+            background: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(192, 21, 47, 0.2);
+            position: relative;
+            overflow: visible;
+            flex-shrink: 0;
+        }
+
+        body.dark-mode .logo-placeholder {
+            background: var(--color-dark-bg);
+        }
+        
+        .logo-placeholder img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            display: block;
+            object-fit: contain;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            color: var(--color-primary);
+            margin: 0 0 6px 0;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        body.dark-mode header h1 { color: #fff; }
+
+        header p {
+            font-size: 0.9em;
+            color: var(--color-text-light);
+            margin: 0;
+            font-weight: 400;
+        }
+
+        body.dark-mode header p { color: #b0b0b0; }
+
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, var(--color-accent) 0%, #a01028 100%);
+            color: #fff;
+            font-size: 0.8em;
+            font-weight: 600;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(192, 21, 47, 0.25);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls-section {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,58,112,0.08);
+            margin-bottom: 24px;
+            border-top: 4px solid var(--color-primary);
+            position: relative;
+        }
+
+        body.dark-mode .controls-section {
+            background: var(--color-dark-surface);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .controls-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-accent) 100%);
+            border-radius: 14px 14px 0 0;
+        }
+
+        .controls-section h2 {
+            margin-bottom: 10px;
+            color: var(--color-primary);
+            font-size: 1.15em;
+            font-weight: 700;
+        }
+
+        body.dark-mode .controls-section h2 { color: #fff; }
+
+        .controls-section > p {
+            font-size: 0.85em;
+            color: var(--color-text-light);
+            margin-bottom: 12px;
+        }
+
+        body.dark-mode .controls-section > p { color: #b0b0b0; }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--color-border);
+            padding-bottom: 10px;
+        }
+
+        body.dark-mode .tabs { border-bottom-color: #444; }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: var(--color-text-light);
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom-color: var(--color-primary);
+        }
+
+        body.dark-mode .tab-btn { color: #b0b0b0; }
+        body.dark-mode .tab-btn.active { color: #fff; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 14px;
+            margin-top: 12px;
+        }
+
+        .control-group { display: flex; flex-direction: column; }
+
+        .control-group label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+            color: var(--color-text);
+        }
+
+        body.dark-mode .control-group label { color: #e0e0e0; }
+
+        .control-group input,
+        .control-group select {
+            padding: 9px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border);
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+            background: white;
+            color: var(--color-text);
+        }
+
+        body.dark-mode .control-group input,
+        body.dark-mode .control-group select {
+            background: #2a2a3e;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        .control-group input:focus,
+        .control-group select:focus {
+            outline: none;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 0 2px rgba(0,58,112,0.1);
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 4px;
+            width: 16px;
+            height: 16px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 16px;
+            font-size: 0.8em;
+            font-weight: bold;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--color-text);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.75em;
+            font-weight: normal;
+        }
+
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: var(--color-text) transparent transparent transparent;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        button {
+            padding: 11px 18px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            min-width: 120px;
+            box-shadow: 0 2px 8px rgba(0,58,112,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.15);
+            transition: left 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,58,112,0.25);
+        }
+
+        button:hover::before { left: 100%; }
+
+        .button-reset { background: #95a5a6; }
+        .button-reset:hover { background: #7f8c8d; }
+
+        .button-secondary {
+            background: white;
+            color: var(--color-primary);
+            border: 1px solid var(--color-primary);
+            flex: 0 1 auto;
+        }
+
+        body.dark-mode .button-secondary {
+            background: var(--color-dark-bg);
+            color: #fff;
+            border-color: var(--color-primary);
+        }
+
+        .button-secondary:hover {
+            background: #f0f4f8;
+        }
+
+        body.dark-mode .button-secondary:hover {
+            background: #333;
+        }
+
+        .results-section {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,58,112,0.08);
+            margin-bottom: 24px;
+            display: none;
+            border-top: 4px solid var(--color-accent);
+        }
+
+        body.dark-mode .results-section {
+            background: var(--color-dark-surface);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .results-section.active {
+            display: block;
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-section h2 {
+            margin-bottom: 12px;
+            color: var(--color-primary);
+            font-size: 1.1em;
+        }
+
+        body.dark-mode .results-section h2 { color: #fff; }
+
+        .alert {
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            font-size: 0.85em;
+            display: none;
+        }
+
+        .alert.show { display: block; }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-left: 4px solid var(--color-warning);
+            color: #856404;
+        }
+
+        body.dark-mode .alert-warning {
+            background: #4a3a1a;
+            color: #ffc107;
+        }
+
+        .info-banner {
+            background: linear-gradient(135deg, #f3f6fb 0%, #eef2f8 100%);
+            border-left: 4px solid var(--color-primary);
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            color: var(--color-text-light);
+            margin-bottom: 14px;
+            box-shadow: 0 1px 4px rgba(0,58,112,0.06);
+        }
+
+        body.dark-mode .info-banner {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+            color: #b0b0b0;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 380px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #f9fbff 0%, #f3f6fb 100%);
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        body.dark-mode .chart-container {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+        }
+
+        .pac-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 12px 0;
+        }
+
+        .pac-box {
+            background: linear-gradient(135deg, #fdfdff 0%, #f4f6fb 100%);
+            border-radius: 10px;
+            padding: 16px;
+            border: 2px solid #dde3f0;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.dark-mode .pac-box {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+            border-color: #444;
+        }
+
+        .pac-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--color-primary) 0%, var(--color-accent) 100%);
+        }
+
+        .pac-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-color: var(--color-primary);
+        }
+
+        body.dark-mode .pac-box:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+
+        .pac-box h3 {
+            margin-bottom: 10px;
+            font-size: 0.98em;
+            font-weight: 700;
+            color: var(--color-text);
+        }
+
+        body.dark-mode .pac-box h3 { color: #fff; }
+
+        .pac-box-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin-bottom: 4px;
+        }
+
+        .pac-box-label { color: var(--color-text-light); }
+
+        body.dark-mode .pac-box-label { color: #b0b0b0; }
+
+        .pac-box-value { font-weight: 600; color: var(--color-text); }
+
+        body.dark-mode .pac-box-value { color: #e0e0e0; }
+
+        .pac-box-value.highlight { color: var(--color-success); }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8em;
+            margin: 12px 0;
+            background: white;
+        }
+
+        body.dark-mode table {
+            background: var(--color-dark-surface);
+        }
+
+        table th {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+            color: #fff;
+            padding: 8px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75em;
+            letter-spacing: 0.5px;
+        }
+
+        table td {
+            padding: 8px;
+            border-bottom: 1px solid #f0f0f0;
+            color: var(--color-text);
+        }
+
+        body.dark-mode table td {
+            border-bottom-color: #333;
+            color: #e0e0e0;
+        }
+
+        table tr:nth-child(even) { background: #fafbfc; }
+
+        body.dark-mode table tr:nth-child(even) { background: #2a2a3e; }
+        
+        table tr:hover { background: #f3f6fb; transition: background 0.2s ease; }
+
+        body.dark-mode table tr:hover { background: #333; }
+
+        table tr.best-row {
+            background: #e8f5e9;
+            font-weight: 600;
+        }
+
+        body.dark-mode table tr.best-row {
+            background: #1a3a2a;
+        }
+
+        .table-wrapper {
+            margin-bottom: 12px;
+        }
+
+        .table-wrapper h4 {
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            color: var(--color-text);
+        }
+
+        body.dark-mode .table-wrapper h4 { color: #e0e0e0; }
+
+        .saved-section {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,58,112,0.08);
+            border-top: 4px solid var(--color-accent);
+        }
+
+        body.dark-mode .saved-section {
+            background: var(--color-dark-surface);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .saved-section h2 {
+            color: var(--color-primary);
+            font-size: 1.15em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        body.dark-mode .saved-section h2 { color: #fff; }
+
+        .saved-list {
+            list-style: none;
+            font-size: 0.8em;
+        }
+
+        .saved-list li {
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #fafbfc 0%, #f5f6f8 100%);
+            border-radius: 6px;
+            border-left: 4px solid var(--color-accent);
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            color: var(--color-text);
+            cursor: pointer;
+        }
+
+        body.dark-mode .saved-list li {
+            background: linear-gradient(135deg, #2a2a3e 0%, #1a1a2e 100%);
+            color: #e0e0e0;
+        }
+        
+        .saved-list li:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .faq-section {
+            background: white;
+            padding: 28px;
+            border-radius: 14px;
+            box-shadow: 0 4px 16px rgba(0,58,112,0.08);
+            margin-bottom: 24px;
+            border-top: 4px solid var(--color-primary);
+        }
+
+        body.dark-mode .faq-section {
+            background: var(--color-dark-surface);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+
+        .faq-item {
+            margin-bottom: 12px;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        body.dark-mode .faq-item { border-color: #444; }
+
+        .faq-question {
+            padding: 12px;
+            background: #f9f9f9;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--color-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s ease;
+        }
+
+        body.dark-mode .faq-question {
+            background: #2a2a3e;
+            color: #fff;
+        }
+
+        .faq-question:hover { background: #f0f0f0; }
+
+        body.dark-mode .faq-question:hover { background: #333; }
+
+        .faq-answer {
+            padding: 12px;
+            background: #fafafa;
+            color: var(--color-text-light);
+            font-size: 0.85em;
+            display: none;
+            line-height: 1.5;
+        }
+
+        body.dark-mode .faq-answer {
+            background: #1a1a2e;
+            color: #b0b0b0;
+        }
+
+        .faq-answer.show { display: block; }
+
+        .scenario-comparison {
+            background: #f0f8ff;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 14px;
+            border: 2px solid var(--color-primary);
+        }
+
+        body.dark-mode .scenario-comparison {
+            background: #2a3a4a;
+            border-color: #0066cc;
+        }
+
+        .disclaimer {
+            background: #ffe6e6;
+            border-left: 4px solid var(--color-accent);
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            color: #c0152f;
+            margin-top: 20px;
+        }
+
+        body.dark-mode .disclaimer {
+            background: #4a2a2a;
+            color: #ff8b8b;
+        }
+
+        @media (max-width: 1200px) {
+            .controls-grid { grid-template-columns: repeat(2, 1fr); }
+            .pac-cards { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            * { font-size: 14px; }
+            
+            body { padding: 12px; }
+            
+            .container { max-width: 100%; }
+            
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 14px;
+                margin-bottom: 16px;
+            }
+            
+            header h1 { font-size: 1.3em; margin-bottom: 4px; }
+            header p { font-size: 0.8em; }
+            
+            .logo-title { width: 100%; }
+            .logo-placeholder { width: 90px; height: 55px; padding: 6px; }
+            
+            .badge { font-size: 0.7em; padding: 6px 10px; }
+            
+            .controls-section, .results-section, .saved-section, .faq-section {
+                padding: 16px;
+                margin-bottom: 16px;
+                border-radius: 10px;
+            }
+            
+            .controls-section h2, .results-section h2, .saved-section h2, .faq-section h2 { font-size: 1em; margin-bottom: 8px; }
+            .controls-section > p { font-size: 0.75em; }
+            
+            .controls-grid { grid-template-columns: 1fr; gap: 10px; }
+            
+            .control-group label { font-size: 0.8em; }
+            .control-group input, .control-group select { font-size: 0.85em; padding: 8px; }
+            
+            .button-group { gap: 8px; }
+            button { padding: 9px 12px; font-size: 0.8em; min-width: 100px; }
+            
+            .chart-container { height: 250px; padding: 12px; }
+            
+            .pac-cards { grid-template-columns: 1fr; gap: 10px; }
+            .pac-box { padding: 12px; }
+            .pac-box h3 { font-size: 0.9em; }
+            .pac-box-row { font-size: 0.75em; margin-bottom: 3px; }
+            
+            table { font-size: 0.75em; }
+            table th { padding: 5px; font-size: 0.7em; }
+            table td { padding: 5px; }
+            
+            .table-wrapper { margin-bottom: 10px; }
+            .table-wrapper h4 { font-size: 0.85em; margin-bottom: 5px; }
+            
+            .saved-section h2, .faq-section h2 { font-size: 1em; }
+            .saved-list { font-size: 0.75em; }
+            .saved-list li { padding: 8px; margin-bottom: 4px; }
+            
+            .info-banner { padding: 10px; font-size: 0.75em; }
+            
+            h3 { font-size: 0.9em !important; }
+
+            .theme-toggle { width: 45px; height: 45px; top: 12px; right: 12px; }
+            
+            .tabs { gap: 5px; }
+            .tab-btn { padding: 6px 12px; font-size: 0.8em; }
+        }
+
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+            
+            header { padding: 10px; gap: 8px; margin-bottom: 12px; }
+            header h1 { font-size: 1.1em; }
+            header p { font-size: 0.75em; }
+            
+            .logo-placeholder { width: 80px; height: 48px; padding: 5px; }
+            .badge { font-size: 0.65em; padding: 4px 8px; }
+            
+            .controls-section, .results-section, .saved-section, .faq-section {
+                padding: 12px;
+                margin-bottom: 12px;
+            }
+            
+            .controls-section h2, .results-section h2, .saved-section h2, .faq-section h2 { font-size: 0.95em; }
+            .controls-section > p { font-size: 0.7em; }
+            
+            .controls-grid { gap: 8px; }
+            .control-group label { font-size: 0.75em; }
+            .control-group input, .control-group select { font-size: 0.8em; padding: 7px; }
+            
+            .button-group { gap: 6px; flex-direction: column; }
+            button { padding: 8px 10px; font-size: 0.75em; width: 100%; }
+            
+            .chart-container { height: 200px; padding: 10px; }
+            
+            .pac-cards { gap: 8px; }
+            .pac-box { padding: 10px; }
+            .pac-box h3 { font-size: 0.85em; margin-bottom: 6px; }
+            .pac-box-row { font-size: 0.7em; margin-bottom: 2px; }
+            
+            table { font-size: 0.7em; }
+            table th { padding: 4px; font-size: 0.65em; }
+            table td { padding: 4px; }
+            
+            .table-wrapper h4 { font-size: 0.8em; margin-bottom: 4px; }
+            
+            .saved-list li { padding: 6px; font-size: 0.7em; }
+            
+            .info-banner { padding: 8px; font-size: 0.7em; }
+            
+            h3 { font-size: 0.85em !important; }
+
+            .theme-toggle { width: 40px; height: 40px; font-size: 1.2em; }
+        }
+
+        @media (max-width: 360px) {
+            body { padding: 4px; }
+            .controls-section, .results-section, .saved-section, .faq-section { padding: 10px; margin-bottom: 10px; }
+            header { padding: 8px; }
+            button { font-size: 0.7em; padding: 6px; }
+            .chart-container { height: 180px; }
+        }
+    </style>
+</head>
+<body>
+<div class="theme-toggle" onclick="toggleDarkMode()" title="Attiva/Disattiva modalità scura">🌙</div>
+
+<div class="container">
+    <header>
+        <div class="logo-title">
+            <div class="logo-placeholder">
+                <img src="https://agi-prod-file-upload-public-main-use1.s3.amazonaws.com/93ffd323-cf9b-4d41-b58f-11ab8357d531" alt="VitaNuova Logo">
+            </div>
+            <div>
+                <h1>VitaNuova PAC</h1>
+                <p>Simulatore Professionale Proiezioni 5-25 anni</p>
+            </div>
+        </div>
+        <span class="badge">Uso Interno</span>
+    </header>
+
+    <div class="controls-section">
+        <h2>Parametri Simulazione</h2>
+        <p>Scenario realistico con rendimento configurabile. Basato su dati tecnici VitaNuova dal documento interno PAC.</p>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('simTab')">Simulazione</button>
+            <button class="tab-btn" onclick="switchTab('compTab')">Confronto 3 Scenari</button>
+        </div>
+
+        <div id="simTab" class="tab-content active">
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label>Rata mensile (€) <span class="tooltip">ℹ️<span class="tooltiptext">Importo mensile del versamento ricorrente</span></span></label>
+                    <select id="monthlyRate">
+                        <option value="100">100€ (1.200€/anno)</option>
+                        <option value="200" selected>200€ (2.400€/anno)</option>
+                        <option value="300">300€ (3.600€/anno)</option>
+                        <option value="400">400€ (4.800€/anno)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Rendimento annuo (%) <span class="tooltip">ℹ️<span class="tooltiptext">Rendimento medio annuo atteso dal fondo</span></span></label>
+                    <input type="number" id="annualReturn" value="3.5" step="0.1" min="0" max="8">
+                </div>
+
+                <div class="control-group">
+                    <label>Profilo rischio <span class="tooltip">ℹ️<span class="tooltiptext">Solo per PAC Risparmio Investimento</span></span></label>
+                    <select id="riskProfile">
+                        <option value="balanced" selected>Bilanciato (1,5%)</option>
+                        <option value="aggressive">Aggressivo (2%)</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label>Obiettivo capitale (€) <span class="tooltip">ℹ️<span class="tooltiptext">Inserisci target per calcolare anni necessari</span></span></label>
+                    <input type="number" id="targetCapital" placeholder="es. 100000">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button onclick="calculateProjections()">📊 Calcola 5-25 anni</button>
+                <button class="button-reset" onclick="resetForm()">🔄 Ripristina</button>
+                <button class="button-secondary" onclick="saveSimulation()">💾 Salva</button>
+                <button class="button-secondary" onclick="exportPDF()">📄 PDF</button>
+                <button class="button-secondary" onclick="exportCSV()">📋 CSV</button>
+                <button class="button-secondary" onclick="printPage()">🖨️ Stampa</button>
+            </div>
+        </div>
+
+        <div id="compTab" class="tab-content">
+            <div class="scenario-comparison">
+                <h3 style="margin-bottom: 10px;">Scenario A</h3>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label>Rata mensile A (€)</label>
+                        <select id="scenarioARata">
+                            <option value="100">100€</option>
+                            <option value="200" selected>200€</option>
+                            <option value="300">300€</option>
+                            <option value="400">400€</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Rendimento A (%)</label>
+                        <input type="number" id="scenarioAReturn" value="3.5" step="0.1" min="0" max="8">
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 10px; margin-top: 16px;">Scenario B</h3>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label>Rata mensile B (€)</label>
+                        <select id="scenarioBRata">
+                            <option value="100">100€</option>
+                            <option value="200">200€</option>
+                            <option value="300" selected>300€</option>
+                            <option value="400">400€</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Rendimento B (%)</label>
+                        <input type="number" id="scenarioBReturn" value="4.0" step="0.1" min="0" max="8">
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 10px; margin-top: 16px;">Scenario C</h3>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <label>Rata mensile C (€)</label>
+                        <select id="scenarioCRata">
+                            <option value="100">100€</option>
+                            <option value="200">200€</option>
+                            <option value="300">300€</option>
+                            <option value="400" selected>400€</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Rendimento C (%)</label>
+                        <input type="number" id="scenarioCReturn" value="4.5" step="0.1" min="0" max="8">
+                    </div>
+                </div>
+
+                <button style="margin-top: 14px;" onclick="compareScenarios()">🔀 Confronta 3 Scenari</button>
+            </div>
+
+            <div id="comparisonResult" style="display: none; margin-top: 14px;"></div>
+        </div>
+    </div>
+
+    <div class="alert alert-warning" id="disclaimerAlert">
+        <strong>⚠️ Attenzione:</strong> Le proiezioni sono stime basate su ipotesi di rendimento costante e non includono tassazione. I risultati effettivi possono variare. Per vincoli di riscatto vedere condizioni di polizza.
+    </div>
+
+    <div class="results-section" id="resultsSection">
+        <h2>Proiezioni Comparate</h2>
+
+        <div id="targetResult" class="alert" style="background: #e8f5e9; border-left: 4px solid var(--color-success); color: #2e7d32; display: none;"></div>
+
+        <div class="info-banner">
+            Parametri tecnici PAC VitaNuova: caricamenti 4,15%-8%, commissioni 1,2%-2%, vincoli riscatto, depositi cauzionali. Scenario: rendimento annuo costante.
+        </div>
+
+        <div class="chart-container">
+            <canvas id="projectionChart"></canvas>
+        </div>
+
+        <h3 style="margin-top: 12px; margin-bottom: 8px; font-size: 0.95em;">Riepilogo a 5, 10, 15, 20, 25 anni</h3>
+        <div class="pac-cards" id="pacCards"></div>
+
+        <h3 style="margin-top: 12px; margin-bottom: 8px; font-size: 0.95em;">Dettagli per Prodotto</h3>
+        <div id="tablesGrid"></div>
+
+        <div class="disclaimer">
+            <strong>Disclaimer Legale:</strong> Questo simulatore è uno strumento informativo per uso interno esclusivo di VitaNuova. Le proiezioni non costituiscono proposta contrattuale né promessa di rendimento. Consultare sempre le condizioni di polizza ufficiali. Dati esenti da tassazione.
+        </div>
+    </div>
+
+    <div class="saved-section">
+        <h2>Simulazioni Salvate nel Browser</h2>
+        <p style="font-size: 0.8em; color: var(--color-text-light); margin-bottom: 8px;">
+            Archiviate localmente. Nessun dato inviato a server. Clicca per ricaricare una simulazione.
+        </p>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span></span>
+            <button class="button-secondary" onclick="clearAllSimulations()" style="font-size: 0.75em; padding: 6px 12px;">🗑️ Cancella Tutto</button>
+        </div>
+        <ul class="saved-list" id="savedList">
+            <li style="color: var(--color-text-light);">Nessuna simulazione salvata.</li>
+        </ul>
+    </div>
+
+    <div class="faq-section">
+        <h2>Domande Frequenti (FAQ)</h2>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">Cosa significa "Caricamento"? <span>+</span></div>
+            <div class="faq-answer">Il caricamento è una commissione percentuale applicata al versamento per coprire costi di gestione iniziale. Nel PAC Valore Futuro è del 5%, nel PAC Risparmio del 8%, nel PAC Goal Driven del 4,15% (solo primi 5 anni).</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">Quando posso riscattare? <span>+</span></div>
+            <div class="faq-answer">PAC Valore Futuro: dopo 3 anni. PAC Risparmio Investimento e Goal Driven: dopo 1 anno. Riscatti parziali disponibili secondo le condizioni contrattuali.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">Cosa sono le commissioni di gestione? <span>+</span></div>
+            <div class="faq-answer">Commissioni annuali applicate sul capitale accumulato per la gestione del fondo. PAC Valore Futuro: 1,2-2%. PAC Risparmio: 1,5-2% (a seconda del profilo). PAC Goal Driven: 1,75%.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">Come funziona il confronto di scenari? <span>+</span></div>
+            <div class="faq-answer">Seleziona tre scenari diversi (rate mensili e rendimenti differenti) per vedere il capitale finale a 25 anni e quale scenario rende di più. Utile per valutare strategie alternative.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">Posso usare il simulatore su mobile? <span>+</span></div>
+            <div class="faq-answer">Sì! L'app è completamente responsive e funziona su smartphone, tablet e desktop. Puoi salvare simulazioni localmente su ogni dispositivo.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">I dati vengono salvati nel cloud? <span>+</span></div>
+            <div class="faq-answer">No. Tutte le simulazioni vengono archiviate solo nel localStorage del tuo browser. Nessun dato viene inviato a server. Le simulazioni si perdono se cancelli i dati del browser.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question" onclick="toggleFAQ(this)">Qual è il rendimento medio realistico? <span>+</span></div>
+            <div class="faq-answer">3,5% è una stima conservativa. Rendimenti storici dei fondi bilanciati variano tra 2-5% annui. Per fondi aggressivi considera 3-6%. Sempre verificare dati ufficiali del fondo.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const pacConfig = {
+        valoreFuturo: {
+            name: 'VitaNuova PAC Valore Futuro',
+            loading: 0.05,
+            managementFee: 0.016,
+            color: '#003a70',
+        },
+        risparmioInvestimento: {
+            name: 'VitaNuova PAC Risparmio Investimento',
+            loading: 0.08,
+            managementFeeBalanced: 0.015,
+            managementFeeAggressive: 0.02,
+            color: '#e67e22',
+        },
+        goalDriven: {
+            name: 'VitaNuova PAC Goal Driven Plan',
+            loadingFirst5Y: 0.0415,
+            managementFee: 0.0175,
+            color: '#2fb584',
+        }
+    };
+
+    let chartInstance = null;
+    let currentProjections = null;
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        if (chartInstance) {
+            setTimeout(() => {
+                if (currentProjections) {
+                    updateChart(currentProjections);
+                }
+            }, 300);
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        event.target.classList.add('active');
+    }
+
+    function toggleFAQ(element) {
+        const answer = element.nextElementSibling;
+        answer.classList.toggle('show');
+        element.querySelector('span').textContent = answer.classList.contains('show') ? '−' : '+';
+    }
+
+    function getIntervals() { return [5, 10, 15, 20, 25]; }
+
+    function calculateProjections() {
+        const monthlyRate = parseInt(document.getElementById('monthlyRate').value);
+        const annualReturn = parseFloat(document.getElementById('annualReturn').value) / 100;
+        const riskProfile = document.getElementById('riskProfile').value;
+        const targetCapital = parseInt(document.getElementById('targetCapital').value) || 0;
+        const annualPremium = monthlyRate * 12;
+        const intervals = getIntervals();
+
+        const projections = { intervals, valoreFuturo: [], risparmioInvestimento: [], goalDriven: [], monthlyRate, annualReturn: annualReturn * 100 };
+
+        intervals.forEach(years => {
+            projections.valoreFuturo.push(calcVF(annualPremium, annualReturn, years));
+            projections.risparmioInvestimento.push(calcRI(annualPremium, annualReturn, years, riskProfile));
+            projections.goalDriven.push(calcGD(annualPremium, annualReturn, years));
+        });
+
+        currentProjections = projections;
+        updateChart(projections);
+        displayCards(projections, monthlyRate);
+        displayTables(projections);
+
+        if (targetCapital > 0) {
+            const targetResult = calculateTargetYears(annualPremium, annualReturn, targetCapital);
+            if (targetResult.found) {
+                document.getElementById('targetResult').innerHTML = `<strong>✓ Obiettivo raggiunto!</strong> Con rata €${monthlyRate} e rendimento ${(annualReturn*100).toFixed(1)}%, raggiungerai €${targetCapital.toLocaleString('it-IT')} in circa ${targetResult.years} anni (primo PAC: ${targetResult.pac})`;
+                document.getElementById('targetResult').style.display = 'block';
+            } else {
+                document.getElementById('targetResult').innerHTML = `<strong>⚠️ Target non raggiungibile</strong> con i parametri attuali entro 25 anni. Prova aumentando la rata mensile o il rendimento.`;
+                document.getElementById('targetResult').style.display = 'block';
+            }
+        } else {
+            document.getElementById('targetResult').style.display = 'none';
+        }
+
+        document.getElementById('resultsSection').classList.add('active');
+    }
+
+    function calculateTargetYears(annualPremium, annualReturn, target) {
+        const intervals = getIntervals();
+        for (let years of intervals) {
+            const proj = calcVF(annualPremium, annualReturn, years);
+            if (proj.capitalNet >= target) {
+                return { found: true, years, pac: pacConfig.valoreFuturo.name };
+            }
+        }
+        const proj25 = calcVF(annualPremium, annualReturn, 25);
+        if (proj25.capitalNet < target) {
+            for (let y = 26; y <= 35; y++) {
+                const p = calcVF(annualPremium, annualReturn, y);
+                if (p.capitalNet >= target) {
+                    return { found: true, years: y, pac: pacConfig.valoreFuturo.name };
+                }
+            }
+            return { found: false };
+        }
+        return { found: true, years: 25, pac: pacConfig.valoreFuturo.name };
+    }
+
+    function compareScenarios() {
+        const rataA = parseInt(document.getElementById('scenarioARata').value);
+        const returnA = parseFloat(document.getElementById('scenarioAReturn').value) / 100;
+        const rataB = parseInt(document.getElementById('scenarioBRata').value);
+        const returnB = parseFloat(document.getElementById('scenarioBReturn').value) / 100;
+        const rataC = parseInt(document.getElementById('scenarioCRata').value);
+        const returnC = parseFloat(document.getElementById('scenarioCReturn').value) / 100;
+
+        const projA = calcVF(rataA * 12, returnA, 25);
+        const projB = calcVF(rataB * 12, returnB, 25);
+        const projC = calcVF(rataC * 12, returnC, 25);
+
+        const scenarios = [
+            { name: 'Scenario A', rata: rataA, rendimento: returnA, proj: projA },
+            { name: 'Scenario B', rata: rataB, rendimento: returnB, proj: projB },
+            { name: 'Scenario C', rata: rataC, rendimento: returnC, proj: projC }
+        ];
+
+        let best = scenarios[0];
+        scenarios.forEach(s => {
+            if (s.proj.capitalNet > best.proj.capitalNet) best = s;
+        });
+
+        let html = `<strong>Confronto 3 Scenari a 25 anni (VitaNuova PAC Valore Futuro):</strong><br><br>`;
+        html += `<table>
+            <tr>
+                <th>Scenario</th>
+                <th>Rata mensile</th>
+                <th>Versamenti</th>
+                <th>Costi</th>
+                <th>Capitale netto</th>
+                <th>Rendimento</th>
+            </tr>`;
+
+        scenarios.forEach(s => {
+            const isBest = s === best;
+            const rowClass = isBest ? 'class="best-row"' : '';
+            html += `<tr ${rowClass}>
+                <td>${s.name}${isBest ? ' ⭐' : ''}</td>
+                <td>€${s.rata}</td>
+                <td>€${Math.round(s.rata * 12 * 25).toLocaleString('it-IT')}</td>
+                <td>€${Math.round(s.proj.commissions).toLocaleString('it-IT')}</td>
+                <td><strong>€${Math.round(s.proj.capitalNet).toLocaleString('it-IT')}</strong></td>
+                <td>${(s.rendimento*100).toFixed(1)}%</td>
+            </tr>`;
+        });
+
+        html += `</table>`;
+        html += `<br><strong>✅ Scenario migliore:</strong> ${best.name} con capitale netto stimato di €${Math.round(best.proj.capitalNet).toLocaleString('it-IT')} (+€${Math.round(best.proj.capitalNet - (best.rata * 12 * 25)).toLocaleString('it-IT')} di rendimento).`;
+
+        const el = document.getElementById('comparisonResult');
+        el.innerHTML = html;
+        el.className = 'info-banner';
+        el.style.display = 'block';
+    }
+
+    function calcVF(annualPremium, annualReturn, years) {
+        const cfg = pacConfig.valoreFuturo;
+        const monthlyPrem = annualPremium / 12;
+        let capital = 0;
+        for (let m = 1; m <= years * 12; m++) {
+            const net = monthlyPrem * (1 - cfg.loading - cfg.managementFee);
+            capital = (capital + net) * (1 + annualReturn / 12);
+        }
+        return {
+            year: years,
+            contributed: annualPremium * years,
+            capitalNet: capital,
+            commissions: annualPremium * years * cfg.loading + capital * cfg.managementFee * years / 12
+        };
+    }
+
+    function calcRI(annualPremium, annualReturn, years, riskProfile) {
+        const cfg = pacConfig.risparmioInvestimento;
+        const mng = riskProfile === 'balanced' ? cfg.managementFeeBalanced : cfg.managementFeeAggressive;
+        const monthlyPrem = annualPremium / 12;
+        let capital = 0;
+        for (let m = 1; m <= years * 12; m++) {
+            const net = monthlyPrem * (1 - cfg.loading - mng);
+            capital = (capital + net) * (1 + annualReturn / 12);
+        }
+        return {
+            year: years,
+            contributed: annualPremium * years,
+            capitalNet: capital,
+            commissions: annualPremium * years * cfg.loading + capital * mng * years / 12
+        };
+    }
+
+    function calcGD(annualPremium, annualReturn, years) {
+        const cfg = pacConfig.goalDriven;
+        const monthlyPrem = annualPremium / 12;
+        let capital = 0;
+        for (let m = 1; m <= years * 12; m++) {
+            const currentYear = Math.ceil(m / 12);
+            const loading = currentYear <= 5 ? cfg.loadingFirst5Y : 0;
+            const net = monthlyPrem * (1 - loading - cfg.managementFee);
+            capital = (capital + net) * (1 + annualReturn / 12);
+        }
+        const loadingYears = Math.min(years, 5);
+        return {
+            year: years,
+            contributed: annualPremium * years,
+            capitalNet: capital,
+            commissions: annualPremium * loadingYears * cfg.loadingFirst5Y + capital * cfg.managementFee * years / 12
+        };
+    }
+
+    function euro(v) {
+        return '€' + Math.round(v).toLocaleString('it-IT');
+    }
+
+    function updateChart(proj) {
+        const ctx = document.getElementById('projectionChart').getContext('2d');
+        const labels = proj.intervals.map(y => y + 'a');
+        const isDark = document.body.classList.contains('dark-mode');
+        
+        const data = {
+            labels,
+            datasets: [
+                {
+                    label: pacConfig.valoreFuturo.name,
+                    data: proj.valoreFuturo.map(p => p.capitalNet),
+                    borderColor: pacConfig.valoreFuturo.color,
+                    backgroundColor: isDark ? 'rgba(0,58,112,0.2)' : 'rgba(0,58,112,0.08)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointBackgroundColor: pacConfig.valoreFuturo.color,
+                    pointBorderColor: isDark ? '#1a1a2e' : '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: pacConfig.risparmioInvestimento.name,
+                    data: proj.risparmioInvestimento.map(p => p.capitalNet),
+                    borderColor: pacConfig.risparmioInvestimento.color,
+                    backgroundColor: isDark ? 'rgba(230,126,34,0.2)' : 'rgba(230,126,34,0.08)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointBackgroundColor: pacConfig.risparmioInvestimento.color,
+                    pointBorderColor: isDark ? '#1a1a2e' : '#fff',
+                    pointBorderWidth: 2
+                },
+                {
+                    label: pacConfig.goalDriven.name,
+                    data: proj.goalDriven.map(p => p.capitalNet),
+                    borderColor: pacConfig.goalDriven.color,
+                    backgroundColor: isDark ? 'rgba(47,181,132,0.2)' : 'rgba(47,181,132,0.08)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.35,
+                    pointRadius: 4,
+                    pointBackgroundColor: pacConfig.goalDriven.color,
+                    pointBorderColor: isDark ? '#1a1a2e' : '#fff',
+                    pointBorderWidth: 2
+                }
+            ]
+        };
+
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: isDark ? '#e0e0e0' : '#1f2121',
+                            padding: 12,
+                            font: { size: 11, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: isDark ? '#b0b0b0' : '#626c7c',
+                            callback: v => euro(v)
+                        },
+                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        ticks: { color: isDark ? '#b0b0b0' : '#626c7c' },
+                        grid: { color: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }
+                    }
+                }
+            }
+        });
+    }
+
+    function displayCards(proj, monthlyRate) {
+        const container = document.getElementById('pacCards');
+        container.innerHTML = '';
+        const last = (key) => proj[key][proj[key].length - 1];
+        const pacs = [
+            { key: 'valoreFuturo', cfg: pacConfig.valoreFuturo },
+            { key: 'risparmioInvestimento', cfg: pacConfig.risparmioInvestimento },
+            { key: 'goalDriven', cfg: pacConfig.goalDriven }
+        ];
+        
+        pacs.forEach((pac) => {
+            const p = last(pac.key);
+            const gain = p.capitalNet - p.contributed;
+            const gainPercent = ((gain / p.contributed) * 100).toFixed(1);
+            const box = document.createElement('div');
+            box.className = 'pac-box';
+            box.innerHTML = `
+                <h3 style="color:${pac.cfg.color};">${pac.cfg.name}</h3>
+                <div class="pac-box-row"><span class="pac-box-label">Rata</span><span class="pac-box-value">€${monthlyRate}</span></div>
+                <div class="pac-box-row"><span class="pac-box-label">Versamenti 25a</span><span class="pac-box-value">${euro(p.contributed)}</span></div>
+                <div class="pac-box-row"><span class="pac-box-label">Costi stimati</span><span class="pac-box-value" style="color:#e67e22;">-${euro(p.commissions)}</span></div>
+                <div class="pac-box-row"><span class="pac-box-label">Capitale netto</span><span class="pac-box-value highlight">${euro(p.capitalNet)}</span></div>
+                <div class="pac-box-row"><span class="pac-box-label">Guadagno</span><span class="pac-box-value" style="color:#2fb584;">+${euro(gain)} (${gainPercent}%)</span></div>
+            `;
+            container.appendChild(box);
+        });
+    }
+
+    function displayTables(proj) {
+        const container = document.getElementById('tablesGrid');
+        container.innerHTML = '';
+        const pacs = ['valoreFuturo', 'risparmioInvestimento', 'goalDriven'];
+        
+        pacs.forEach(key => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-wrapper';
+            const title = document.createElement('h4');
+            title.textContent = pacConfig[key].name;
+            wrapper.appendChild(title);
+            const table = document.createElement('table');
+            let html = '<tr><th>Anni</th><th>Versamenti</th><th>Costi</th><th>Capitale</th><th>Guadagno</th></tr>';
+            proj[key].forEach(row => {
+                const gain = row.capitalNet - row.contributed;
+                html += `<tr><td>${row.year}</td><td>${euro(row.contributed)}</td><td>${euro(row.commissions)}</td><td>${euro(row.capitalNet)}</td><td style="color:${gain>=0?'#2fb584':'#e67e22'}">${euro(gain)}</td></tr>`;
+            });
+            table.innerHTML = html;
+            wrapper.appendChild(table);
+            container.appendChild(wrapper);
+        });
+    }
+
+    function resetForm() {
+        document.getElementById('monthlyRate').value = '200';
+        document.getElementById('annualReturn').value = '3.5';
+        document.getElementById('riskProfile').value = 'balanced';
+        document.getElementById('targetCapital').value = '';
+        document.getElementById('resultsSection').classList.remove('active');
+        if (chartInstance) chartInstance.destroy();
+    }
+
+    function saveSimulation() {
+        const sim = {
+            monthlyRate: document.getElementById('monthlyRate').value,
+            annualReturn: document.getElementById('annualReturn').value,
+            riskProfile: document.getElementById('riskProfile').value,
+            timestamp: new Date().toLocaleString('it-IT')
+        };
+        const sims = JSON.parse(localStorage.getItem('vn_sims') || '[]');
+        sims.push(sim);
+        localStorage.setItem('vn_sims', JSON.stringify(sims));
+        renderSavedList();
+        alert('✓ Simulazione salvata.');
+    }
+
+    function renderSavedList() {
+        const sims = JSON.parse(localStorage.getItem('vn_sims') || '[]');
+        const list = document.getElementById('savedList');
+        if (!sims.length) {
+            list.innerHTML = '<li style="color: var(--color-text-light);">Nessuna simulazione salvata.</li>';
+            return;
+        }
+        list.innerHTML = sims.map((s, idx) => `<li onclick="loadSimulation(${idx})" style="cursor: pointer;">${s.timestamp} – €${s.monthlyRate}/mese, ${s.annualReturn}%, ${s.riskProfile}</li>`).join('');
+    }
+
+    function loadSimulation(idx) {
+        const sims = JSON.parse(localStorage.getItem('vn_sims') || '[]');
+        if (sims[idx]) {
+            document.getElementById('monthlyRate').value = sims[idx].monthlyRate;
+            document.getElementById('annualReturn').value = sims[idx].annualReturn;
+            document.getElementById('riskProfile').value = sims[idx].riskProfile;
+            calculateProjections();
+        }
+    }
+
+    function clearAllSimulations() {
+        if (confirm('Cancellare tutte le simulazioni salvate?')) {
+            localStorage.removeItem('vn_sims');
+            renderSavedList();
+            alert('✓ Tutte le simulazioni sono state cancellate.');
+        }
+    }
+
+    async function exportPDF() {
+        if (!document.getElementById('resultsSection').classList.contains('active')) {
+            alert('Calcola prima una simulazione.');
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(14);
+        doc.text('VitaNuova - Simulatore PAC', 14, 12);
+        doc.setFontSize(10);
+        doc.text(`Rata: €${document.getElementById('monthlyRate').value} | Rendimento: ${document.getElementById('annualReturn').value}% | Data: ${new Date().toLocaleDateString('it-IT')}`, 14, 20);
+        doc.setFontSize(9);
+        doc.text('Proiezioni non vincolanti basate su dati tecnici VitaNuova documento interno.', 14, 26);
+        let y = 35;
+        const rows = document.querySelectorAll('table tr');
+        rows.forEach((row, idx) => {
+            if (y > 270) { doc.addPage(); y = 14; }
+            const cells = row.querySelectorAll('td');
+            if (cells.length === 0) return;
+            let text = '';
+            cells.forEach(cell => text += cell.textContent.trim() + ' | ');
+            doc.text(text, 14, y, { maxWidth: 180 });
+            y += 5;
+        });
+        doc.save('simulazione-pac-vitanuova.pdf');
+    }
+
+    function exportCSV() {
+        if (!document.getElementById('resultsSection').classList.contains('active')) {
+            alert('Calcola prima una simulazione.');
+            return;
+        }
+        let csv = 'VitaNuova Simulatore PAC\n';
+        csv += `Data,${new Date().toLocaleDateString('it-IT')}\n`;
+        csv += `Rata,€${document.getElementById('monthlyRate').value}\n`;
+        csv += `Rendimento,${document.getElementById('annualReturn').value}%\n\n`;
+        document.querySelectorAll('table').forEach((table) => {
+            csv += table.textContent.replace(/\t/g, ',') + '\n\n';
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `pac-sim-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+    }
+
+    function printPage() {
+        if (!document.getElementById('resultsSection').classList.contains('active')) {
+            alert('Calcola prima una simulazione.');
+            return;
+        }
+        window.print();
+    }
+
+    window.addEventListener('load', () => {
+        const darkMode = localStorage.getItem('darkMode') === 'true';
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+        }
+        calculateProjections();
+        renderSavedList();
+    });
+</script>
+</body>
+</html>
